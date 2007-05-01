@@ -1,0 +1,122 @@
+<x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='XMP toolkit 3.0-28, framework 1.6'>
+<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns:iX='http://ns.adobe.com/iX/1.0/'>
+
+ <rdf:Description rdf:about=''
+  xmlns:crs='http://ns.adobe.com/camera-raw-settings/1.0/'>
+  <crs:Version>3.4x89</crs:Version>
+  <crs:RawFileName>IMG_0720.CR2</crs:RawFileName>
+  <crs:WhiteBalance>Custom</crs:WhiteBalance>
+  <crs:Temperature>5650</crs:Temperature>
+  <crs:Tint>-8</crs:Tint>
+  <crs:Exposure>+0.05</crs:Exposure>
+  <crs:Shadows>6</crs:Shadows>
+  <crs:Brightness>30</crs:Brightness>
+  <crs:Contrast>+25</crs:Contrast>
+  <crs:Saturation>0</crs:Saturation>
+  <crs:Sharpness>10</crs:Sharpness>
+  <crs:LuminanceSmoothing>0</crs:LuminanceSmoothing>
+  <crs:ColorNoiseReduction>25</crs:ColorNoiseReduction>
+  <crs:ChromaticAberrationR>0</crs:ChromaticAberrationR>
+  <crs:ChromaticAberrationB>0</crs:ChromaticAberrationB>
+  <crs:VignetteAmount>0</crs:VignetteAmount>
+  <crs:ShadowTint>0</crs:ShadowTint>
+  <crs:RedHue>0</crs:RedHue>
+  <crs:RedSaturation>0</crs:RedSaturation>
+  <crs:GreenHue>0</crs:GreenHue>
+  <crs:GreenSaturation>0</crs:GreenSaturation>
+  <crs:BlueHue>0</crs:BlueHue>
+  <crs:BlueSaturation>0</crs:BlueSaturation>
+  <crs:ToneCurveName>Medium Contrast</crs:ToneCurveName>
+  <crs:ToneCurve>
+   <rdf:Seq>
+    <rdf:li>0, 0</rdf:li>
+    <rdf:li>32, 22</rdf:li>
+    <rdf:li>64, 56</rdf:li>
+    <rdf:li>128, 128</rdf:li>
+    <rdf:li>192, 196</rdf:li>
+    <rdf:li>255, 255</rdf:li>
+   </rdf:Seq>
+  </crs:ToneCurve>
+  <crs:CameraProfile>ACR 2.4</crs:CameraProfile>
+  <crs:HasSettings>True</crs:HasSettings>
+  <crs:HasCrop>False</crs:HasCrop>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:exif='http://ns.adobe.com/exif/1.0/'>
+  <exif:ExifVersion>0221</exif:ExifVersion>
+  <exif:ExposureTime>1/200</exif:ExposureTime>
+  <exif:ShutterSpeedValue>7643856/1000000</exif:ShutterSpeedValue>
+  <exif:FNumber>11/1</exif:FNumber>
+  <exif:ApertureValue>6918863/1000000</exif:ApertureValue>
+  <exif:ExposureProgram>4</exif:ExposureProgram>
+  <exif:DateTimeOriginal>2007-01-27T09:57:12-06:00</exif:DateTimeOriginal>
+  <exif:DateTimeDigitized>2007-01-27T09:57:12-06:00</exif:DateTimeDigitized>
+  <exif:ExposureBiasValue>1/3</exif:ExposureBiasValue>
+  <exif:MaxApertureValue>434375/100000</exif:MaxApertureValue>
+  <exif:MeteringMode>5</exif:MeteringMode>
+  <exif:FocalLength>200/1</exif:FocalLength>
+  <exif:CustomRendered>0</exif:CustomRendered>
+  <exif:ExposureMode>0</exif:ExposureMode>
+  <exif:WhiteBalance>1</exif:WhiteBalance>
+  <exif:SceneCaptureType>0</exif:SceneCaptureType>
+  <exif:FocalPlaneXResolution>3504000/885</exif:FocalPlaneXResolution>
+  <exif:FocalPlaneYResolution>2336000/590</exif:FocalPlaneYResolution>
+  <exif:FocalPlaneResolutionUnit>2</exif:FocalPlaneResolutionUnit>
+  <exif:ISOSpeedRatings>
+   <rdf:Seq>
+    <rdf:li>100</rdf:li>
+   </rdf:Seq>
+  </exif:ISOSpeedRatings>
+  <exif:Flash rdf:parseType='Resource'>
+   <exif:Fired>False</exif:Fired>
+   <exif:Return>0</exif:Return>
+   <exif:Mode>2</exif:Mode>
+   <exif:Function>False</exif:Function>
+   <exif:RedEyeMode>False</exif:RedEyeMode>
+  </exif:Flash>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:aux='http://ns.adobe.com/exif/1.0/aux/'>
+  <aux:SerialNumber>1921005859</aux:SerialNumber>
+  <aux:LensInfo>100/1 400/1 0/0 0/0</aux:LensInfo>
+  <aux:Lens>100.0-400.0 mm</aux:Lens>
+  <aux:ImageNumber>208</aux:ImageNumber>
+  <aux:FlashCompensation>1/3</aux:FlashCompensation>
+  <aux:OwnerName>unknown</aux:OwnerName>
+  <aux:Firmware>2.0.3</aux:Firmware>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:pdf='http://ns.adobe.com/pdf/1.3/'>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:photoshop='http://ns.adobe.com/photoshop/1.0/'>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:tiff='http://ns.adobe.com/tiff/1.0/'>
+  <tiff:Make>Canon</tiff:Make>
+  <tiff:Model>Canon EOS 20D</tiff:Model>
+  <tiff:Orientation>1</tiff:Orientation>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:xap='http://ns.adobe.com/xap/1.0/'>
+  <xap:ModifyDate>2007-01-27T09:57:12-06:00</xap:ModifyDate>
+  <xap:Rating>0</xap:Rating>
+ </rdf:Description>
+
+ <rdf:Description rdf:about=''
+  xmlns:dc='http://purl.org/dc/elements/1.1/'>
+  <dc:creator>
+   <rdf:Seq>
+    <rdf:li>unknown</rdf:li>
+   </rdf:Seq>
+  </dc:creator>
+ </rdf:Description>
+
+</rdf:RDF>
+</x:xmpmeta>
