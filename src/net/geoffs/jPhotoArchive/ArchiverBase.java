@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.geoffs.jPhotoArchive.ImageArchiveDB.InvalidEntry;
 import net.geoffs.jPhotoArchive.ImageArchiveDB.Result;
@@ -491,12 +493,6 @@ public class ArchiverBase
         }
     }
     
-    public static boolean hasPreviousVersionNumber(String name)
-    {
-        String[] chunks = name.split("^.*\\(jPA-[0-9]+\\)\\..*$");
-        return chunks.length == 1;
-    }
-    
     private static boolean contains(String[] existingFiles, String testElement)
     {
         for (int i = 0; i < existingFiles.length; i++)
@@ -507,5 +503,28 @@ public class ArchiverBase
             }
         }
         return false;
+    }
+    
+    private static final Pattern versionNumberPattern = Pattern.compile("^.* \\(jPA-([0-9]+)\\)\\..*$");
+    
+    public static boolean hasPreviousVersionNumber(String name)
+    {
+//        String[] chunks = name.split("^.* \\(jPA-[0-9]+\\)\\..*$");
+//        return chunks.length == 0;
+        return versionNumberPattern.matcher(name).matches();
+    }
+    
+    public static int getVersionNumber(String filename)
+    {
+        Matcher matcher = versionNumberPattern.matcher(filename);
+        if( matcher.find() )
+        {
+            String num = matcher.group(1);
+            return Integer.parseInt(num);
+        }
+        else
+        {
+            return -1;
+        }
     }
 }
