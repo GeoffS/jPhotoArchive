@@ -25,6 +25,9 @@ public class ArchiverBase
         void runJob(ImageArchiveDB db, JobResults results) throws SQLException, ClassNotFoundException;
     }
 
+    // For use with copyFileAndAddToDb()
+    public static final boolean VERSION_IF_NEEDED = true;
+    public static final boolean DO_NOT_VERSION    = false;
 
     protected static void runJobNoTraps(File archiveRoot, JobResults results, DbJob job) throws SQLException, ClassNotFoundException
     {
@@ -203,7 +206,7 @@ public class ArchiverBase
             String dstRelPath = new File(dstDir, new File(relPath).getName()).getPath();
             try
             {
-                copyFileAndAddToDb(srcFile, dstRelPath, md5sum, archinveRootDir, db);
+                copyFileAndAddToDb(srcFile, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db);
             }
             catch (Exception e)
             {
@@ -235,7 +238,7 @@ public class ArchiverBase
             String dstRelPath = new File(archiveSubDir, relPath).getPath();
             try
             {
-                copyFileAndAddToDb(fullPath, dstRelPath, md5sum, archinveRootDir, db);
+                copyFileAndAddToDb(fullPath, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db);
             }
             catch (Exception e)
             {
@@ -293,6 +296,7 @@ public class ArchiverBase
     }
     
     protected static void copyFileAndAddToDb(File srcFileFullPath,
+                                             boolean insertVersionNumberIfneeded,
                                              String dstFileRelPath,
                                              String md5sum,
                                              File archiveRootDir, 
@@ -301,8 +305,9 @@ public class ArchiverBase
 {
         File archiveFilesDir = makeFilesDirFrom(archiveRootDir);
         File dstFileFullPath = new File(archiveFilesDir, dstFileRelPath);
+        File dstDir = dstFileFullPath.getParentFile();
         
-        dstFileFullPath.getParentFile().mkdirs();
+        dstDir.mkdirs();
 
         String existingEntry = db.alreadyExists(md5sum);
         if(existingEntry!=null)
@@ -313,6 +318,10 @@ public class ArchiverBase
         }
         else
         {
+            if(insertVersionNumberIfneeded)
+            {
+                dstFileFullPath = insertCopyNumberIfNecessary(dstDir, dstFileFullPath);
+            }
             copy(srcFileFullPath, dstFileFullPath);
 
             String toMD5Sum = calcMD5For(dstFileFullPath);
@@ -326,6 +335,28 @@ public class ArchiverBase
                 log.error(msg);
                 System.out.println("Error: "+msg);
             }
+        }
+    }
+
+    private static File insertCopyNumberIfNecessary(File dstDir, File dstFileFullPath)
+    {
+        File[] existingFiles = dstDir.listFiles();
+        String[] existingFileanames = new String[existingFiles.length];
+        for (int i = 0; i < existingFiles.length; i++)
+        {
+            existingFileanames[i] = existingFiles[i].getName();
+        }
+        
+        String dstFilename = dstFileFullPath.getName();
+        
+        if(!contains(existingFileanames, dstFilename))
+        {
+            return dstFileFullPath;
+        }
+        else
+        {
+            String versionedName = makeVersionedName(dstFilename, existingFileanames);
+            return new File( dstDir, versionedName);
         }
     }
 
@@ -477,20 +508,32 @@ public class ArchiverBase
 
     public static String makeVersionedName(String startingName, String[] existingFiles)
     {
-        if(contains(existingFiles, startingName))
-        {
-            return startingName;
-        }
-        else
-        {
-            int trailingDotIndex = startingName.lastIndexOf('.');
-            String name = startingName.substring(0, trailingDotIndex);
-            String ext = startingName.substring(trailingDotIndex+1);
-            
-            
-            
-            return startingName;
-        }
+//        if(!contains(existingFiles, startingName))
+//        {
+//            return startingName;
+//        }
+//        else
+//        {
+            int copyNum = 1;
+            String candidateFilename = makeCopyOfFilename(startingName, copyNum);
+            while (contains(existingFiles, candidateFilename))
+            {
+                copyNum++;
+                candidateFilename = makeCopyOfFilename(startingName, copyNum);
+            }
+            return candidateFilename;
+//        }
+    }
+
+    private static String makeCopyOfFilename(String startingName, int copyNum)
+    {
+        int trailingDotIndex = startingName.lastIndexOf('.');
+        String name = startingName.substring(0, trailingDotIndex);
+        String ext = startingName.substring(trailingDotIndex+1);
+        
+        String copyNumber = " (jPA-"+copyNum+")";
+        
+        return name+copyNumber+"."+ext;
     }
     
     private static boolean contains(String[] existingFiles, String testElement)

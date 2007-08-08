@@ -58,7 +58,7 @@ public class MainTest extends TestCase
         assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
         assertHasCorrectNumberOfEnties(testDir, 2);
         assertExists(testDir, "IMG_3904_screen.jpg");
-        assertExists(testDir, "IMG_3904_screen (2).jpg");
+        assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
     }
     
     public void testFileForMd5Sum() throws SQLException, ClassNotFoundException
