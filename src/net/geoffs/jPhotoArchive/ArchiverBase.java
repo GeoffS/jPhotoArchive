@@ -356,6 +356,12 @@ public class ArchiverBase
         else
         {
             String versionedName = makeVersionedName(dstFilename, existingFileanames);
+            
+            String msg = "Destination "+dstFileFullPath+" already exists with different contents, "+
+                          "renaming to: "+versionedName;
+            log.warning(msg);
+            System.out.println("\n"+msg);
+            
             return new File( dstDir, versionedName);
         }
     }
