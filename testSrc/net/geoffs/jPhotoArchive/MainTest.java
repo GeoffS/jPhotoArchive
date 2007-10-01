@@ -61,6 +61,59 @@ public class MainTest extends TestCase
         assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
     }
     
+    /* This is bad!  Copy-Paste from testSameFilenameDifferentContents()
+     * with additions...
+     * REFACTOR!
+     */
+    public void testSameFilenameDifferentContentsWithBackups()
+    {
+        // STEP 1a: Add a photo to TIER1 and verify:
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
+        File filesDir = assertExists(TIER1_ROOT, "files");
+        File testDir = assertHasCorrectNumberOfEnties(filesDir, "TestDir", 1);
+        assertExists(testDir, "IMG_3904_screen.jpg");
+        
+        // STEP 1b: Backup to TIER2 and verify:
+        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        
+        File filesDir2 = assertExists(TIER2_ROOT, "files");
+        File testDir2 = assertHasCorrectNumberOfEnties(filesDir2, "TestDir", 1);
+        assertExists(testDir2, "IMG_3904_screen.jpg");
+        
+        assertTwoTiersAreGood(TIER1_ROOT, TIER2_ROOT);
+        
+        //STEP 2a: Add a second photo with the same name and different contents
+        //         to TIER1 and make sure it is renamed properly:
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
+        assertHasCorrectNumberOfEnties(testDir, 2);
+        assertExists(testDir, "IMG_3904_screen.jpg");
+        assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
+        
+        // STEP 2b: Check DB for correct file entries:
+        assertBothVersionsAreInDBCorrectly(TIER1_ROOT);
+        
+        // STEP 3: Backup to TIER2 and verify:
+        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        
+        assertHasCorrectNumberOfEnties(testDir2, 2);
+        assertExists(testDir2, "IMG_3904_screen.jpg");
+        assertExists(testDir2, "IMG_3904_screen (jPA-1).jpg");
+        
+        assertBothVersionsAreInDBCorrectly(TIER1_ROOT);
+        assertBothVersionsAreInDBCorrectly(TIER2_ROOT);
+        
+        assertTwoTiersAreGood(TIER1_ROOT, TIER2_ROOT);
+    }
+
+    private void assertBothVersionsAreInDBCorrectly(File archiveBaseDir)
+    {
+        JobResults listResults = assertJobSuccess(Main.list(archiveBaseDir));
+        assertEquals(0, listResults.getErrors().size());
+        assertEquals(2, listResults.getResults().size());
+        assertResultsContainFilename( "TestDir\\"+"IMG_3904_screen.jpg",         listResults.getResults());
+        assertResultsContainFilename( "TestDir\\"+"IMG_3904_screen (jPA-1).jpg", listResults.getResults());
+    }
+    
     public void testFileForMd5Sum() throws SQLException, ClassNotFoundException
     {
         testSimpleArchive();
@@ -225,6 +278,11 @@ public class MainTest extends TestCase
         testSimpleArchive();
         
         // Backup files from tier1 -> tier2 and verify the archives are the same:
+        backupTier1ToTier2AndVerifyTheyAreTheSame();
+    }
+
+    private void backupTier1ToTier2AndVerifyTheyAreTheSame()
+    {
         assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
         assertTestPhotos1AreInTree(TIER1_ROOT, SUB_DIR1);
         assertTestPhotos1AreInTree(TIER2_ROOT, SUB_DIR1);

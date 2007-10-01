@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.geoffs.jPhotoArchive.ArchiverBase.JobResults;
+
 public class ImageArchiveDB
 {
     public static final String PHOTOS_TABLE = "photos";
@@ -24,7 +26,7 @@ public class ImageArchiveDB
     public static final String JOB_NUMBER_COLUMN = "run_number";
     public static final String JOB_TIME = "run_time";
     
-    public void dump() throws SQLException
+    public void dump(JobResults results) throws SQLException
     {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * from "+PHOTOS_TABLE+";");
@@ -35,7 +37,10 @@ public class ImageArchiveDB
             Timestamp archivedOn = rs.getTimestamp(ARCHIVE_TIME_COLUMN);
             boolean sentToNextTier = rs.getBoolean(ARCHIVED_TO_NEXT_TIER_COLUMN);
 
-            System.out.println(md5hex+" - "+filename+" ("+jobNumber+", "+archivedOn+", "+sentToNextTier+")");
+            String info = "("+jobNumber+", "+archivedOn+", "+sentToNextTier+")";
+            results.addResult(new Result(md5hex, filename, info));
+            
+            System.out.println(md5hex+" - "+filename+" "+info);
         }
         stmt.close();
     }

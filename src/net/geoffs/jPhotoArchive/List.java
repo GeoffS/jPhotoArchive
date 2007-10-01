@@ -14,7 +14,7 @@ public class List extends ArchiverBase
             {
                 System.out.println("Listing "+destinationDir+":");
                 System.out.println("---------------");
-                db.dump();
+                db.dump(results);
                 System.out.println("\nDone.\n");
             } 
         });

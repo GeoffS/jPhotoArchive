@@ -297,14 +297,19 @@ public class ArchiverBase
     
     protected static void copyFileAndAddToDb(File srcFileFullPath,
                                              boolean insertVersionNumberIfneeded,
-                                             String dstFileRelPath,
+                                             String dstFileRelPathName,
                                              String md5sum,
                                              File archiveRootDir, 
                                              ImageArchiveDB db) 
     throws SQLException, FileNotFoundException, IOException
 {
         File archiveFilesDir = makeFilesDirFrom(archiveRootDir);
-        File dstFileFullPath = new File(archiveFilesDir, dstFileRelPath);
+        
+        File dstFileRelPath = new File(dstFileRelPathName);
+        String dstFileName = dstFileRelPath.getName();
+        File dstFileRelParent = dstFileRelPath.getParentFile();
+        
+        File dstFileFullPath = new File(archiveFilesDir, dstFileRelPathName);
         File dstDir = dstFileFullPath.getParentFile();
         
         dstDir.mkdirs();
@@ -320,14 +325,18 @@ public class ArchiverBase
         {
             if(insertVersionNumberIfneeded)
             {
-                dstFileFullPath = insertCopyNumberIfNecessary(dstDir, dstFileFullPath);
+                dstFileName = insertCopyNumberIfNecessary(dstDir, dstFileName);
+                
+                // Recreate the necessary pieces for the DB and copy operations:
+                dstFileRelPathName = new File(dstFileRelParent, dstFileName).getPath();
+                dstFileFullPath    = new File(dstDir,           dstFileName);
             }
             copy(srcFileFullPath, dstFileFullPath);
 
             String toMD5Sum = calcMD5For(dstFileFullPath);
             if(md5sum.equals(toMD5Sum))
             {
-                db.insert(md5sum, dstFileRelPath);
+                db.insert(md5sum, dstFileRelPathName);
             }
             else
             {
@@ -338,7 +347,7 @@ public class ArchiverBase
         }
     }
 
-    private static File insertCopyNumberIfNecessary(File dstDir, File dstFileFullPath)
+    private static String insertCopyNumberIfNecessary(File dstDir, String dstFilename)
     {
         File[] existingFiles = dstDir.listFiles();
         String[] existingFileanames = new String[existingFiles.length];
@@ -347,22 +356,22 @@ public class ArchiverBase
             existingFileanames[i] = existingFiles[i].getName();
         }
         
-        String dstFilename = dstFileFullPath.getName();
+        //String dstFilename = dstFileFullPath.getName();
         
         if(!contains(existingFileanames, dstFilename))
         {
-            return dstFileFullPath;
+            return dstFilename;
         }
         else
         {
             String versionedName = makeVersionedName(dstFilename, existingFileanames);
             
-            String msg = "Destination "+dstFileFullPath+" already exists with different contents, "+
+            String msg = "Destination "+dstFilename+" in "+dstDir+" already exists with different contents, "+
                           "renaming to: "+versionedName;
             log.warning(msg);
             System.out.println("\n"+msg);
             
-            return new File( dstDir, versionedName);
+            return versionedName;
         }
     }
 

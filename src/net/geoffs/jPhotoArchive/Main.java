@@ -274,17 +274,17 @@ public class Main extends ArchiverBase
         return validateDbAgainstFiles(archiveRootDir, archiveRootDir);
     }
     
-    static JobResults list(final File destinationDir)
+    static JobResults list(final File archiveRootDir)
     {
-        log.msg(">>> List DB "+destinationDir);
+        log.msg(">>> List DB "+archiveRootDir);
         
-        return runJob(destinationDir, new DbJob()
+        return runJob(archiveRootDir, new DbJob()
         {
             public void runJob(ImageArchiveDB db, JobResults results) throws SQLException
             {
-                System.out.println("Listing "+destinationDir+":");
+                System.out.println("Listing "+archiveRootDir+":");
                 System.out.println("---------------");
-                db.dump();
+                db.dump(results);
                 System.out.println("\nDone.\n");
             }   
         });
