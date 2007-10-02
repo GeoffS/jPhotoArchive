@@ -48,6 +48,29 @@ public class MainTest extends TestCase
         System.out.println("\n------ Test Output: -----");
     }
     
+    public void testFilenameChangedAndThenFixed() throws SQLException, ClassNotFoundException
+    {
+        testSimpleArchive();
+        
+        // (Re)Check one of the files:
+        File filesDir = assertHasCorrectNumberOfEnties(TIER1_ROOT, "files", "dir1", 1);
+        File testPhotos1Dir = assertHasCorrectNumberOfEnties(filesDir, "testPhotos1", 3);
+        File testFile = assertExists(testPhotos1Dir, "IMG_6669_screen.jpg");
+        
+        // Rename the file checked above:
+        File testFileNewName = new File(testPhotos1Dir, "AnotherNameAltogether.jpg");
+        assertTrue(testFile.renameTo(testFileNewName));
+        
+        // Check to make sure the DB and files are inconsistant:
+        assertJobFailure(Main.validateFiles(TIER1_ROOT));
+        
+        // Run the Fix-it Job:
+        assertJobSuccess(Main.fixDbForFile(TIER1_ROOT, "dir1\\testPhotos1\\AnotherNameAltogether.jpg"));
+        
+        // Check to make sure the archive is valid:
+        assertValidateDbAndFiles(TIER1_ROOT);
+    }
+    
     public void testSameFilenameDifferentContents()
     {
         assertJobSuccess(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
@@ -55,10 +78,17 @@ public class MainTest extends TestCase
         File testDir = assertHasCorrectNumberOfEnties(filesDir, "TestDir", 1);
         assertExists(testDir, "IMG_3904_screen.jpg");
         
+        // Check that files are on-disk correctly:
         assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
         assertHasCorrectNumberOfEnties(testDir, 2);
         assertExists(testDir, "IMG_3904_screen.jpg");
         assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
+        
+        // Check that the DB entries are correct:
+        assertBothVersionsAreInDBCorrectly(TIER1_ROOT);
+        
+        // Check to make sure the archive is valid:
+        assertValidateDbAndFiles(TIER1_ROOT);
     }
     
     /* This is bad!  Copy-Paste from testSameFilenameDifferentContents()

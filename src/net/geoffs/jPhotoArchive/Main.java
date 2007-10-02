@@ -1,10 +1,13 @@
 package net.geoffs.jPhotoArchive;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import net.geoffs.jPhotoArchive.ImageArchiveDB.InvalidEntry;
 
 
 public class Main extends ArchiverBase
@@ -567,6 +570,37 @@ public class Main extends ArchiverBase
                 if(relPath!=null)
                 {
                     results.addResult(md5Sum, relPath);
+                }
+            }   
+        });
+    }
+
+    public static JobResults fixDbForFile(final File archiveRootDir, final String relativeFilename)
+    {
+        log.msg(">>> Fix DB in "+archiveRootDir+" for filename "+relativeFilename);
+
+        return runJob(archiveRootDir, new DbJob()
+        {
+            public void runJob(ImageArchiveDB db, JobResults results) throws SQLException
+            {
+                final File srcArchiveFilesDir = makeFilesDirFrom(archiveRootDir);
+                final File fileToFix = new File(srcArchiveFilesDir, relativeFilename);
+                if(fileToFix.exists())
+                {
+                    String md5sum = calcMD5For(fileToFix);
+                    String currentRelPath = db.alreadyExists(md5sum);
+                    if(currentRelPath != null)
+                    {
+                        db.update(md5sum, relativeFilename);
+                    }
+                    else
+                    {
+                        results.addError(new InvalidEntry(md5sum, relativeFilename, null, "No DB Entry Found for MD5"));
+                    }
+                }
+                else
+                {
+                    results.addError(new InvalidEntry(null, relativeFilename, null, "File Not Found"));
                 }
             }   
         });
