@@ -90,6 +90,11 @@ public class Main extends ArchiverBase
             final String filenameFragment = args[0+argShift];
             success = findForFilename(primaryArchiveRootDir, filenameFragment);
         }
+        else if(commandName.equalsIgnoreCase("fixFileInDb"))
+        {
+            final String relativeFilePath = args[0+argShift];
+            success = fixDbForFile(primaryArchiveRootDir, relativeFilePath);
+        }
 //        else if(commandName.equalsIgnoreCase(""))
 //        {
 //            
