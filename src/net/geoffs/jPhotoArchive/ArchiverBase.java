@@ -77,11 +77,13 @@ public class ArchiverBase
     {
         private final List<Result> results;
         private final List<InvalidEntry> errors;
+        private int numberOfFilesCopied;
         
         public JobResults()
         {
             this.errors = new ArrayList<InvalidEntry>();
             this.results = new ArrayList<Result>();
+            numberOfFilesCopied = 0;
         }
         
         public void addError(InvalidEntry error)
@@ -122,6 +124,7 @@ public class ArchiverBase
         {
             errors.addAll(moreResults.getErrors());
             results.addAll(moreResults.getResults());
+            numberOfFilesCopied += moreResults.numberOfFilesCopied;
             
             return this;
         }
@@ -139,6 +142,16 @@ public class ArchiverBase
         public List<InvalidEntry> getErrors()
         {
             return errors;
+        }
+
+        public int numFilesCopied()
+        {
+            return numberOfFilesCopied;
+        }
+
+        public void anotherFileCopied()
+        {
+            numberOfFilesCopied++;
         }
     }
 
@@ -206,7 +219,7 @@ public class ArchiverBase
             String dstRelPath = new File(dstDir, new File(relPath).getName()).getPath();
             try
             {
-                copyFileAndAddToDb(srcFile, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db);
+                copyFileAndAddToDb(srcFile, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db, results);
             }
             catch (Exception e)
             {
@@ -238,7 +251,7 @@ public class ArchiverBase
             String dstRelPath = new File(archiveSubDir, relPath).getPath();
             try
             {
-                copyFileAndAddToDb(fullPath, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db);
+                copyFileAndAddToDb(fullPath, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db, results);
             }
             catch (Exception e)
             {
@@ -300,7 +313,8 @@ public class ArchiverBase
                                              String dstFileRelPathName,
                                              String md5sum,
                                              File archiveRootDir, 
-                                             ImageArchiveDB db) 
+                                             ImageArchiveDB db, 
+                                             JobResults results) 
     throws SQLException, FileNotFoundException, IOException
 {
         File archiveFilesDir = makeFilesDirFrom(archiveRootDir);
@@ -332,6 +346,7 @@ public class ArchiverBase
                 dstFileFullPath    = new File(dstDir,           dstFileName);
             }
             copy(srcFileFullPath, dstFileFullPath);
+            results.anotherFileCopied();
 
             String toMD5Sum = calcMD5For(dstFileFullPath);
             if(md5sum.equals(toMD5Sum))

@@ -12,6 +12,7 @@ public class AllTests
         suite.addTestSuite(FilenameFixerTest.class);
         suite.addTestSuite(MainTest.class);
         suite.addTestSuite(ArchiverBase_Utils_Test.class);
+        suite.addTestSuite(JobResultsTest.class);
         //$JUnit-END$
         return suite;
     }

@@ -20,18 +20,24 @@ public class MainTest extends TestCase
     
     private static final String TEST_PHOTOS_NAME1 = "testData/testPhotos1";
     private static final File TEST_PHOTOS1 = new File(TEST_PHOTOS_NAME1);
+    private static final int NUM_FILES_IN_TEST_PHOTOS1 = 7;
     
     private static final String TEST_PHOTOS_NAME2 = "testData/testPhotos2";
     private static final File TEST_PHOTOS2 = new File(TEST_PHOTOS_NAME2);
+    private static final int NUM_FILES_IN_TEST_PHOTOS2 = 1;
     
     private static final String TEST_PHOTOS_NAME3 = "testData/testPhotos3";
     private static final File TEST_PHOTOS3 = new File(TEST_PHOTOS_NAME3);
+    private static final int NUM_FILES_IN_TEST_PHOTOS3 = 1;
     
     private static final String TEST_PHOTOS_NAME3a = "testData/testPhotos3a";
     private static final File TEST_PHOTOS3a = new File(TEST_PHOTOS_NAME3a);
+    private static final int NUM_FILES_IN_TEST_PHOTOS3a = 1;
     
     private static final String SUB_DIR1 = "dir1";
     private static final String SUB_DIR2 = "dir2";
+    
+    private static final int NO_FILES_COPIED = 0;
     
     protected void setUp() throws Exception
     {
@@ -65,7 +71,7 @@ public class MainTest extends TestCase
         assertJobFailure(Main.validateFiles(TIER1_ROOT));
         
         // Run the Fix-it Job:
-        assertJobSuccess(Main.fixDbForFile(TIER1_ROOT, "dir1\\testPhotos1\\AnotherNameAltogether.jpg"));
+        assertJobNoErrors(Main.fixDbForFile(TIER1_ROOT, "dir1\\testPhotos1\\AnotherNameAltogether.jpg"));
         
         // Check to make sure the archive is valid:
         assertValidateDbAndFiles(TIER1_ROOT);
@@ -73,13 +79,13 @@ public class MainTest extends TestCase
     
     public void testSameFilenameDifferentContents()
     {
-        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
+        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
         File filesDir = assertExists(TIER1_ROOT, "files");
         File testDir = assertHasCorrectNumberOfEnties(filesDir, "TestDir", 1);
         assertExists(testDir, "IMG_3904_screen.jpg");
         
         // Check that files are on-disk correctly:
-        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
+        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
         assertHasCorrectNumberOfEnties(testDir, 2);
         assertExists(testDir, "IMG_3904_screen.jpg");
         assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
@@ -98,13 +104,13 @@ public class MainTest extends TestCase
     public void testSameFilenameDifferentContentsWithBackups()
     {
         // STEP 1a: Add a photo to TIER1 and verify:
-        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
+        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
         File filesDir = assertExists(TIER1_ROOT, "files");
         File testDir = assertHasCorrectNumberOfEnties(filesDir, "TestDir", 1);
         assertExists(testDir, "IMG_3904_screen.jpg");
         
         // STEP 1b: Backup to TIER2 and verify:
-        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        assertJobNoErrors(Main.backup(TIER1_ROOT, TIER2_ROOT));
         
         File filesDir2 = assertExists(TIER2_ROOT, "files");
         File testDir2 = assertHasCorrectNumberOfEnties(filesDir2, "TestDir", 1);
@@ -114,7 +120,7 @@ public class MainTest extends TestCase
         
         //STEP 2a: Add a second photo with the same name and different contents
         //         to TIER1 and make sure it is renamed properly:
-        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
+        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
         assertHasCorrectNumberOfEnties(testDir, 2);
         assertExists(testDir, "IMG_3904_screen.jpg");
         assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
@@ -123,7 +129,7 @@ public class MainTest extends TestCase
         assertBothVersionsAreInDBCorrectly(TIER1_ROOT);
         
         // STEP 3: Backup to TIER2 and verify:
-        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        assertJobNoErrors(Main.backup(TIER1_ROOT, TIER2_ROOT));
         
         assertHasCorrectNumberOfEnties(testDir2, 2);
         assertExists(testDir2, "IMG_3904_screen.jpg");
@@ -137,7 +143,7 @@ public class MainTest extends TestCase
 
     private void assertBothVersionsAreInDBCorrectly(File archiveBaseDir)
     {
-        JobResults listResults = assertJobSuccess(Main.list(archiveBaseDir));
+        JobResults listResults = assertJobNoErrors(Main.list(archiveBaseDir));
         assertEquals(0, listResults.getErrors().size());
         assertEquals(2, listResults.getResults().size());
         assertResultsContainFilename( "TestDir\\"+"IMG_3904_screen.jpg",         listResults.getResults());
@@ -150,14 +156,14 @@ public class MainTest extends TestCase
         
         // Check a match:
         JobResults jobResultsMatch = 
-            assertJobSuccess(Main.findForMD5Sum(TIER1_ROOT, "2ea55e0237f8e194bd3df18b960c5897"));
+            assertJobNoErrors(Main.findForMD5Sum(TIER1_ROOT, "2ea55e0237f8e194bd3df18b960c5897"));
         List<Result> matchResults = jobResultsMatch.getResults();
         assertEquals("Wrong number of results", 1, matchResults.size());
         assertResultsContainFilename( "dir1\\testPhotos1\\IMG_6669_screen.jpg", matchResults);
         
         // Check no-match:
         JobResults jobResultsNoMatch = 
-            assertJobSuccess(Main.findForMD5Sum(TIER1_ROOT, "NotAnMD5ChecksumNoWayRightLength"));
+            assertJobNoErrors(Main.findForMD5Sum(TIER1_ROOT, "NotAnMD5ChecksumNoWayRightLength"));
         List<Result> noMatchResults = jobResultsNoMatch.getResults();
         assertEquals("Wrong number of results", 0, noMatchResults.size());
     }
@@ -166,7 +172,7 @@ public class MainTest extends TestCase
     {
         testSimpleArchive();
         
-        JobResults jobResults = assertJobSuccess(Main.findForFilename(TIER1_ROOT, "0720"));
+        JobResults jobResults = assertJobNoErrors(Main.findForFilename(TIER1_ROOT, "0720"));
         
         List<Result> findResults = jobResults.getResults();
         
@@ -197,7 +203,7 @@ public class MainTest extends TestCase
         
         assertTestPhotos1AreInTree(TIER1_ROOT, "dir1", "subdir1");
         
-        assertJobSuccess(Main.move(TIER1_ROOT, "dir1\\testPhotos1\\subdir1", "dir1\\testPhotos1\\subdir1a"));
+        assertJobNoErrors(Main.move(TIER1_ROOT, "dir1\\testPhotos1\\subdir1", "dir1\\testPhotos1\\subdir1a"));
         
         assertTestPhotos1AreInTree(TIER1_ROOT, "dir1", "subdir1a");
         
@@ -223,7 +229,7 @@ public class MainTest extends TestCase
         
         // Now we'll fix it up...
         //assertJobSuccess(Main.markMissingFilesAsUnBackedup(TIER1_ROOT, TIER2_ROOT));
-        assertJobSuccess(Main.fixBadBackup(TIER1_ROOT, TIER2_ROOT));
+        assertJobNoErrors(Main.fixBadBackup(TIER1_ROOT, TIER2_ROOT));
         
         // Now everything should be good again...
         assertTwoTiersAreGood(TIER1_ROOT, TIER2_ROOT);
@@ -232,7 +238,7 @@ public class MainTest extends TestCase
         //    First, double check that the test-file is still gone:
         assertTestFileDoesNotExistIn(TIER2_ROOT, SUB_DIR1);
         //    Next run a backup:
-        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        assertJobNoErrors(Main.backup(TIER1_ROOT, TIER2_ROOT));
         //    Check for the file:
         assertTestFileExistsIn(TIER2_ROOT, SUB_DIR1);
         //    Validate both tiers:
@@ -245,7 +251,7 @@ public class MainTest extends TestCase
         testSimpleArchive();
         
         // Backup files from tier1 -> tier2 and verify the archives are the same:
-        assertJobSuccess(Main.backupWithFullValidation(TIER1_ROOT, TIER2_ROOT));
+        assertJobNoErrors(Main.backupWithFullValidation(TIER1_ROOT, TIER2_ROOT));
         assertTestPhotos1AreInTree(TIER1_ROOT, SUB_DIR1);
         assertTestPhotos1AreInTree(TIER2_ROOT, SUB_DIR1);
         
@@ -254,15 +260,15 @@ public class MainTest extends TestCase
 
     public void testCardArchiveAndBackup()
     {
-        assertJobSuccess(Main.archiveCard(TEST_PHOTOS1, "New-Dir-Name", TIER1_ROOT));
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS1, "New-Dir-Name", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS1);
         assertTestPhotos1AreInDir(TIER1_ROOT, "New-Dir-Name");
         
         // Validate the DB and files:
-        assertJobSuccess(Main.validateFiles(TIER1_ROOT));
-        assertJobSuccess(Main.validateDB(TIER1_ROOT));
+        assertJobSuccess(Main.validateFiles(TIER1_ROOT), NO_FILES_COPIED);
+        assertJobSuccess(Main.validateDB(TIER1_ROOT), NO_FILES_COPIED);
         
         // Backup Files:
-        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT), NUM_FILES_IN_TEST_PHOTOS1);
         assertTestPhotos1AreInDir(TIER2_ROOT, "New-Dir-Name");
         
         assertValidateDbAndFiles(TIER2_ROOT);
@@ -271,26 +277,29 @@ public class MainTest extends TestCase
     private void assertValidateDbAndFiles(File archiveRoot)
     {
         // Validate the DB and files:
-        assertJobSuccess(Main.validateFiles(archiveRoot));
-        assertJobSuccess(Main.validateDB(archiveRoot));
+        assertJobNoErrors(Main.validateFiles(archiveRoot));
+        assertJobNoErrors(Main.validateDB(archiveRoot));
     }
 
     public void testSimpleArchive() throws SQLException, ClassNotFoundException
     {
-        testArchive(TEST_PHOTOS1, SUB_DIR1);
+        testArchiveTree(TEST_PHOTOS1, SUB_DIR1, NUM_FILES_IN_TEST_PHOTOS1);
     }
     
     public void testSimpleArchiveWithNullSubDir() throws SQLException, ClassNotFoundException
     {
-        assertJobSuccess(Main.archiveTree(TEST_PHOTOS1, null, TIER1_ROOT));
+        assertJobNoErrors(Main.archiveTree(TEST_PHOTOS1, null, TIER1_ROOT));
         assertTestPhotos1AreInTree(TIER1_ROOT, null);
         
         assertValidateDbAndFiles(TIER1_ROOT);
     }
     
-    private void testArchive(File testPhotosDir, String archiveSubDir)
+    private void testArchiveTree(final File testPhotosDir, 
+                                 final String archiveSubDir, 
+                                 final int expectedNumResults)
     {
-        assertJobSuccess(Main.archiveTree(testPhotosDir, archiveSubDir, TIER1_ROOT));
+        assertJobSuccess(Main.archiveTree(testPhotosDir, archiveSubDir, TIER1_ROOT),
+                         expectedNumResults);
         assertTestPhotos1AreInTree(TIER1_ROOT, SUB_DIR1);
         
         assertValidateDbAndFiles(TIER1_ROOT);
@@ -298,8 +307,8 @@ public class MainTest extends TestCase
     
     public void testTwoStepArchive()
     {
-        testArchive(TEST_PHOTOS1, SUB_DIR1);
-        testArchive(TEST_PHOTOS2, SUB_DIR2);
+        testArchiveTree(TEST_PHOTOS1, SUB_DIR1, NUM_FILES_IN_TEST_PHOTOS1);
+        testArchiveTree(TEST_PHOTOS2, SUB_DIR2, NUM_FILES_IN_TEST_PHOTOS2);
     }
     
     public void testSimpleBackup() throws SQLException, ClassNotFoundException
@@ -313,7 +322,7 @@ public class MainTest extends TestCase
 
     private void backupTier1ToTier2AndVerifyTheyAreTheSame()
     {
-        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        assertJobNoErrors(Main.backup(TIER1_ROOT, TIER2_ROOT));
         assertTestPhotos1AreInTree(TIER1_ROOT, SUB_DIR1);
         assertTestPhotos1AreInTree(TIER2_ROOT, SUB_DIR1);
         
@@ -343,20 +352,18 @@ public class MainTest extends TestCase
     //  Helper Classes below
     //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     
-    private JobResults assertJobSuccess(JobResults results)
+    private JobResults assertJobNoErrors(final JobResults results)
     {
         ArchiverBase.printErrors(results);
         assertTrue("Job failed", results.noErrors());
         return results;
-//        if(results.noErrors())
-//        {
-//            return;
-//        }
-//        else
-//        {
-//            ArchiverBase.printErrors(results);
-//            fail("Job failed");
-//        }
+    }
+    
+    private JobResults assertJobSuccess(final JobResults results, final int expectedNumberOfFilesCopied)
+    {
+        assertJobNoErrors(results);
+        assertEquals("Wrong number of files copied", expectedNumberOfFilesCopied, results.numFilesCopied());
+        return results;
     }
     
     private JobResults assertJobFailure(JobResults results)
@@ -368,7 +375,7 @@ public class MainTest extends TestCase
 
     private void makeNewTier(final File archiveRootDir) throws SQLException, ClassNotFoundException
     {
-        assertJobSuccess(Main.makeNewTier(archiveRootDir));
+        assertJobNoErrors(Main.makeNewTier(archiveRootDir));
         assertTrue("", TIER1_ROOT.exists());
     }
 
@@ -542,14 +549,14 @@ public class MainTest extends TestCase
     private void assertTwoTiersAreGood(File tier1Root, File tier2Root)
     {
         // Validate the backup DB and files:
-        assertJobSuccess(Main.validateFiles(tier1Root));
-        assertJobSuccess(Main.validateDB(tier1Root));
+        assertJobNoErrors(Main.validateFiles(tier1Root));
+        assertJobNoErrors(Main.validateDB(tier1Root));
         
         // Validate the backup DB and files:
-        assertJobSuccess(Main.validateFiles(tier2Root));
-        assertJobSuccess(Main.validateDB(tier2Root));
+        assertJobNoErrors(Main.validateFiles(tier2Root));
+        assertJobNoErrors(Main.validateDB(tier2Root));
         
         // Validate the two tiers against each other:
-        assertJobSuccess(Main.validateTwoTiers(tier1Root, tier2Root));
+        assertJobNoErrors(Main.validateTwoTiers(tier1Root, tier2Root));
     }
 }

@@ -236,7 +236,8 @@ public class Main extends ArchiverBase
                                 copyFileAndAddToDb(srcFileFullPath, DO_NOT_VERSION, 
                                                    fileRelPath, 
                                                    md5Sum, 
-                                                   dstArchiveDir, dstDb);
+                                                   dstArchiveDir, dstDb,
+                                                   results);
                                 srcDb.setAsBackedUp(md5Sum);
                             }
                             catch (Exception e)
