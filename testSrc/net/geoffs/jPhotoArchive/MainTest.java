@@ -411,11 +411,13 @@ public class MainTest extends TestCase
     {
         File filesDir = assertHasCorrectNumberOfEnties(root, "files", 1);
         
-        File singleDir = assertHasCorrectNumberOfEnties(filesDir, singleDirName, 5);
+        File singleDir = assertHasCorrectNumberOfEnties(filesDir, singleDirName, 7);
         assertExists(singleDir, "IMG_6669_screen.jpg");
         assertExists(singleDir, "IMG_0720.CR2");
         assertExists(singleDir, "IMG_0720_test.jpg");
         assertExists(singleDir, "IMG_0720.xmp");
+        assertExists(singleDir, "MVI_1234.MOV");
+        assertExists(singleDir, "MVI_1234.THM");
         // 'index.html' should not be here.
         assertExists(singleDir, "IMG_1214.JPG");
     }
@@ -432,10 +434,12 @@ public class MainTest extends TestCase
         File testPhotos1Dir = assertHasCorrectNumberOfEnties(filesDir, "testPhotos1", 3);
         assertExists(testPhotos1Dir, "IMG_6669_screen.jpg");
         
-        File subDir1 = assertHasCorrectNumberOfEnties(testPhotos1Dir, movableDirName, 3);
+        File subDir1 = assertHasCorrectNumberOfEnties(testPhotos1Dir, movableDirName, 5);
         assertExists(subDir1, "IMG_0720.CR2");
         assertExists(subDir1, "IMG_0720_test.jpg");
         assertExists(subDir1, "IMG_0720.xmp");
+        assertExists(subDir1, "MVI_1234.MOV");
+        assertExists(subDir1, "MVI_1234.THM");
         // 'index.html' should not be here.
         
         File subDir2 = assertHasCorrectNumberOfEnties(testPhotos1Dir, "subdir2", 1);

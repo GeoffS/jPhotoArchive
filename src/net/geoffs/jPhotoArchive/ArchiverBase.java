@@ -467,7 +467,7 @@ public class ArchiverBase
 
     protected static class ImageFilter implements FileFilter
     {
-        private static final String[] extensions = {"jpg", "jpeg", "cr2", "psd", "nef", "tif", "tiff", "xmp" };
+        private static final String[] extensions = {"jpg", "jpeg", "cr2", "psd", "nef", "tif", "tiff", "xmp", "mov", "thm" };
         
         public boolean accept(File file)
         {
