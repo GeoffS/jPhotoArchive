@@ -108,6 +108,8 @@ public class Main extends ArchiverBase
             success.addError(new ImageArchiveDB.InvalidEntry(null, null, null, msg));
         }
         
+        System.out.println(success.numFilesCopied()+" files were copied by this job.");
+        
         if(success.noErrors())
         {
             log.exit("Program terminated with no reported errors.");
