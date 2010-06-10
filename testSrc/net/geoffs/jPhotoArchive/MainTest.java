@@ -39,12 +39,16 @@ public class MainTest extends TestCase
     
     private static final int NO_FILES_COPIED = 0;
     
+    public static void main(String[] args)
+    {
+        System.out.println("Cleaning up the test area.");
+        cleanTestArea();
+    }
+    
     protected void setUp() throws Exception
     {
         System.out.println("\n\n------------ Setup Output: ------------");
-        ArchiverBase.shutdownLog();
-        rmDir(TIER1_ROOT);
-        rmDir(TIER2_ROOT);
+        cleanTestArea();
         
         ArchiverBase.initLog(TIER1_ROOT);
         makeNewTier(TIER1_ROOT);
@@ -52,6 +56,13 @@ public class MainTest extends TestCase
         assertNoPhotosIn(TIER1_ROOT);
         assertNoPhotosIn(TIER2_ROOT);
         System.out.println("\n------ Test Output: -----");
+    }
+
+    private static void cleanTestArea()
+    {
+        ArchiverBase.shutdownLog();
+        rmDir(TIER1_ROOT);
+        rmDir(TIER2_ROOT);
     }
     
     public void testFilenameChangedAndThenFixed() throws SQLException, ClassNotFoundException
@@ -379,7 +390,7 @@ public class MainTest extends TestCase
         assertTrue("", TIER1_ROOT.exists());
     }
 
-    private void rmDir(final File dir)
+    private static void rmDir(final File dir)
     {
         if(!dir.exists()) return; 
         
