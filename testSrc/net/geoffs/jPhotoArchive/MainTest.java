@@ -41,7 +41,6 @@ public class MainTest extends TestCase
     
     public static void main(String[] args)
     {
-        System.out.println("Cleaning up the test area.");
         cleanTestArea();
     }
     
@@ -58,8 +57,17 @@ public class MainTest extends TestCase
         System.out.println("\n------ Test Output: -----");
     }
 
+    @Override
+    protected void tearDown() throws Exception
+    {
+        // For some reason a file in testBackupErrorHandling() can't be
+        // deleted until after the test JVM closes. ???
+        //if(!Boolean.getBoolean("NoCleanUpAtTearDown")) cleanTestArea();
+    }
+
     private static void cleanTestArea()
     {
+        System.out.println("Cleaning up the test area.");
         ArchiverBase.shutdownLog();
         rmDir(TIER1_ROOT);
         rmDir(TIER2_ROOT);
@@ -78,7 +86,7 @@ public class MainTest extends TestCase
         File testFileNewName = new File(testPhotos1Dir, "AnotherNameAltogether.jpg");
         assertTrue(testFile.renameTo(testFileNewName));
         
-        // Check to make sure the DB and files are inconsistant:
+        // Check to make sure the DB and files are inconsistent:
         assertJobFailure(Main.validateFiles(TIER1_ROOT));
         
         // Run the Fix-it Job:
@@ -90,13 +98,13 @@ public class MainTest extends TestCase
     
     public void testSameFilenameDifferentContents()
     {
-        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS3);
         File filesDir = assertExists(TIER1_ROOT, "files");
         File testDir = assertHasCorrectNumberOfEnties(filesDir, "TestDir", 1);
         assertExists(testDir, "IMG_3904_screen.jpg");
         
         // Check that files are on-disk correctly:
-        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS3a);
         assertHasCorrectNumberOfEnties(testDir, 2);
         assertExists(testDir, "IMG_3904_screen.jpg");
         assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
@@ -115,7 +123,7 @@ public class MainTest extends TestCase
     public void testSameFilenameDifferentContentsWithBackups()
     {
         // STEP 1a: Add a photo to TIER1 and verify:
-        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT));
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3, "TestDir", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS3);
         File filesDir = assertExists(TIER1_ROOT, "files");
         File testDir = assertHasCorrectNumberOfEnties(filesDir, "TestDir", 1);
         assertExists(testDir, "IMG_3904_screen.jpg");
@@ -131,7 +139,7 @@ public class MainTest extends TestCase
         
         //STEP 2a: Add a second photo with the same name and different contents
         //         to TIER1 and make sure it is renamed properly:
-        assertJobNoErrors(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT));
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS3a, "TestDir", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS3a);
         assertHasCorrectNumberOfEnties(testDir, 2);
         assertExists(testDir, "IMG_3904_screen.jpg");
         assertExists(testDir, "IMG_3904_screen (jPA-1).jpg");
@@ -299,7 +307,7 @@ public class MainTest extends TestCase
     
     public void testSimpleArchiveWithNullSubDir() throws SQLException, ClassNotFoundException
     {
-        assertJobNoErrors(Main.archiveTree(TEST_PHOTOS1, null, TIER1_ROOT));
+        assertJobSuccess(Main.archiveTree(TEST_PHOTOS1, null, TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS1);
         assertTestPhotos1AreInTree(TIER1_ROOT, null);
         
         assertValidateDbAndFiles(TIER1_ROOT);
@@ -345,8 +353,8 @@ public class MainTest extends TestCase
         // Load files into the tier1 archive
         testSimpleArchive();
         
-        // Insert one test file into TIER2's files folder (but no DB):
-        /*File srcFile = */copyOnePhotoFromTierToTier(TIER1_ROOT, TIER2_ROOT);
+        // Insert one test file into TIER2's files folder (but not DB):
+        /*File srcFile =*/ copyOnePhotoFromTierToTier(TIER1_ROOT, TIER2_ROOT);
         
         // Check TIER2 to make sure it's invalid:
         JobResults errors1 = assertJobFailure(Main.validateFiles(TIER2_ROOT));
@@ -356,7 +364,8 @@ public class MainTest extends TestCase
         JobResults errors2 = assertJobFailure(Main.backup(TIER1_ROOT, TIER2_ROOT));
         assertTestFileInErrors(errors2);
         
-//        assertTrue("Couln'd delete the src file: "+srcFile, srcFile.delete());
+        // For some reason the file can't be deleted ???
+        //assertTrue("Couldn't delete the src file: "+srcFile, srcFile.delete());
     }
     
     //==============================================================================================
@@ -366,7 +375,7 @@ public class MainTest extends TestCase
     private JobResults assertJobNoErrors(final JobResults results)
     {
         ArchiverBase.printErrors(results);
-        assertTrue("Job failed", results.noErrors());
+        assertTrue("Job failed unexpectedly", results.noErrors());
         return results;
     }
     
