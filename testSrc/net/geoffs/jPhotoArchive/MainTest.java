@@ -248,7 +248,8 @@ public class MainTest extends TestCase
         
         // Now we'll fix it up...
         //assertJobSuccess(Main.markMissingFilesAsUnBackedup(TIER1_ROOT, TIER2_ROOT));
-        assertJobNoErrors(Main.fixBadBackup(TIER1_ROOT, TIER2_ROOT));
+        JobResults fixBadBackupJobResults = assertJobNoErrors(Main.fixBadBackup(TIER1_ROOT, TIER2_ROOT));
+        assertTestFileInResults(fixBadBackupJobResults);
         
         // Now everything should be good again...
         assertTwoTiersAreGood(TIER1_ROOT, TIER2_ROOT);
@@ -257,7 +258,7 @@ public class MainTest extends TestCase
         //    First, double check that the test-file is still gone:
         assertTestFileDoesNotExistIn(TIER2_ROOT, SUB_DIR1);
         //    Next run a backup:
-        assertJobNoErrors(Main.backup(TIER1_ROOT, TIER2_ROOT));
+        assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT), 1);
         //    Check for the file:
         assertTestFileExistsIn(TIER2_ROOT, SUB_DIR1);
         //    Validate both tiers:
@@ -493,12 +494,20 @@ public class MainTest extends TestCase
         return srcFile;
     }
     
-    private void assertTestFileInErrors(JobResults errors)
+    private void assertTestFileInResults(JobResults jobResults)
     {
-        assertEquals( "Wrong number of errors", 1, errors.getErrors().size());
+        assertEquals( "Wrong number of errors", 1, jobResults.getResults().size());
         assertEquals( "Wrong filename", 
-                      "dir1\\testPhotos1\\subdir1\\IMG_0720_test.jpg", 
-                      errors.getErrors().get(0).queryRelPath);
+                      TEST_FILE_REL_PATH, 
+                      jobResults.getResults().get(0).resultRelPath);
+    }
+    
+    private void assertTestFileInErrors(JobResults jobResults)
+    {
+        assertEquals( "Wrong number of errors", 1, jobResults.getErrors().size());
+        assertEquals( "Wrong filename", 
+                      TEST_FILE_REL_PATH, 
+                      jobResults.getErrors().get(0).queryRelPath);
     }
 
     private File assertTestFileExistsIn(File root, String subDirName)
@@ -513,6 +522,8 @@ public class MainTest extends TestCase
         return assertDoesNotExist(testFile);
     }
 
+    private static final String TEST_FILE_REL_PATH = "dir1\\testPhotos1\\subdir1\\IMG_0720_test.jpg";
+    
     private File makeTheOneTestFile(File root, String subDirName)
     {
         File filesDir = new File(root, "files");

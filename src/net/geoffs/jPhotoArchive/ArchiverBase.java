@@ -579,6 +579,7 @@ public class ArchiverBase
     }
     
     private static final Pattern versionNumberPattern = Pattern.compile("^.* \\(jPA-([0-9]+)\\)\\..*$");
+    public static final String APP_NAME = "jPhotoArchive ";
     
     public static boolean hasPreviousVersionNumber(String name)
     {

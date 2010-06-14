@@ -3,11 +3,14 @@ package net.geoffs.jPhotoArchive;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import net.geoffs.jPhotoArchive.ImageArchiveDB.InvalidEntry;
+import net.geoffs.jPhotoArchive.ImageArchiveDB.Result;
 
 
 public class Main extends ArchiverBase
@@ -19,6 +22,10 @@ public class Main extends ArchiverBase
         
         initLog(primaryArchiveRootDir);
         
+        log.TimeStamp();
+        String versionString = APP_NAME+" "+Version.VERSON;
+        log.msg(versionString);
+        System.out.println(versionString);
         log.commandLine(args);
         
         final int argShift = 2;
@@ -120,6 +127,9 @@ public class Main extends ArchiverBase
             System.out.println("Program terminated with errors.");
             printErrors(success);
         }
+        
+        final String nowString = log.TimeStamp();
+        System.out.println(APP_NAME+" finished at "+nowString);
     }
 
     static JobResults backupWithFullValidation(final File firstLevelArchiveDir, final File secondLevelArchiveDir)
@@ -488,6 +498,7 @@ public class Main extends ArchiverBase
                         
                         for (String dbMd5sum : entries.keySet())
                         {
+                            System.out.print(".");
                             String dbFilename = entries.get(dbMd5sum);
                             File dstFile = new File(dstArchiveFilesDir, dbFilename);
                             if(dstFile.exists()) // (i.e. good backup)
@@ -518,6 +529,7 @@ public class Main extends ArchiverBase
                                         //  2) Remove the backup-tier's DB entry:
                                         srcDb.setAsNotBackedUp(dbMd5sum);
                                         dstDb.delete(dbMd5sum);
+                                        results.addResult(new Result(dbMd5sum, dbFilename, "Fixed file missing in backup,"));
                                     }
                                     else
                                     {
@@ -539,6 +551,7 @@ public class Main extends ArchiverBase
                                 }
                             }
                         }
+                        System.out.println();
                     }
                 });
             }

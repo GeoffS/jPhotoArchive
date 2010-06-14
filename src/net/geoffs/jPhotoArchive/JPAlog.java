@@ -24,4 +24,6 @@ public interface JPAlog
 
     void close();
 
+    String TimeStamp();
+
 }

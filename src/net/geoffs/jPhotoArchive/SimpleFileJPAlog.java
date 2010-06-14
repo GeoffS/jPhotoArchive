@@ -99,4 +99,12 @@ public class SimpleFileJPAlog implements JPAlog
         }
         printSeparator();
     }
+
+    @Override
+    public String TimeStamp()
+    {
+        final String formattedDate = new SimpleDateFormat().format(new Date());
+        msg(formattedDate);
+        return formattedDate;
+    }
 }
