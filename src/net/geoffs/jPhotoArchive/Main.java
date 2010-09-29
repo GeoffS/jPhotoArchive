@@ -3,8 +3,6 @@ package net.geoffs.jPhotoArchive;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;

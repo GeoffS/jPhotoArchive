@@ -362,7 +362,7 @@ public class ImageArchiveDB
         System.out.println();
     }
 
-    public Map getUnbackedupEntries() throws SQLException
+    public Map<String, String> getUnbackedupEntries() throws SQLException
     {
         return getEntriesWithBackupStatus(false);
     }
