@@ -395,7 +395,7 @@ public class ArchiverBase
         return new File(archiveRootDir, "files");
     }
     
-    protected static void makeNewJob(ImageArchiveDB db) throws SQLException
+    protected static void makeNewJobEntryInDB(ImageArchiveDB db) throws SQLException
     {
         try
         {

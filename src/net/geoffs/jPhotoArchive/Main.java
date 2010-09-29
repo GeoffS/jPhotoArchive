@@ -230,7 +230,7 @@ public class Main extends ArchiverBase
                 ArchiverBase.runJobNoTraps(dstArchiveDir, results, new DbJob(){
                     public void runJob(ImageArchiveDB dstDb, JobResults results) throws SQLException, ClassNotFoundException
                     {
-                        makeNewJob(dstDb);
+                        makeNewJobEntryInDB(dstDb);
                         
                         Map<String, String> files = srcDb.getUnbackedupEntries();
                         for (Iterator<String> iter = files.keySet().iterator(); iter.hasNext();)
@@ -383,7 +383,7 @@ public class Main extends ArchiverBase
         {
             public void runJob(ImageArchiveDB db, JobResults results) throws SQLException
             {
-                makeNewJob(db);
+                makeNewJobEntryInDB(db);
                 
                 FileFind.FindVisitor dbVisitor = 
                     new DbAndCopyVisitor(db, destinationDir, archiveSubDir, results);
@@ -418,7 +418,7 @@ public class Main extends ArchiverBase
         {
             public void runJob(ImageArchiveDB db, JobResults results) throws SQLException
             {
-                makeNewJob(db);
+                makeNewJobEntryInDB(db);
                 
                 FileFind.FindVisitor dbVisitor = 
                     new DbAndCopyVisitor1(db, destinationDir, newDirName, results);
