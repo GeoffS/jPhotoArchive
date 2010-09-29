@@ -232,8 +232,8 @@ public class Main extends ArchiverBase
                     {
                         makeNewJob(dstDb);
                         
-                        Map files = srcDb.getUnbackedupEntries();
-                        for (Iterator iter = files.keySet().iterator(); iter.hasNext();)
+                        Map<String, String> files = srcDb.getUnbackedupEntries();
+                        for (Iterator<String> iter = files.keySet().iterator(); iter.hasNext();)
                         {
                             System.out.print(".");
                             String md5Sum = (String) iter.next();
