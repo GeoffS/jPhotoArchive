@@ -86,17 +86,17 @@ public class ArchiverBase
             numberOfFilesCopied = 0;
         }
         
-        public void addError(InvalidEntry error)
+        public synchronized void addError(InvalidEntry error)
         {
             this.errors.add(error);
         }
         
-        public void addResult(Result result)
+        public synchronized void addResult(Result result)
         {
             this.results.add(result);
         }
         
-        public void addError(final String md5Sum, 
+        public synchronized void addError(final String md5Sum, 
                              final String queryRelPath, 
                              final String resultRelPath, 
                              final String reason)
@@ -104,23 +104,23 @@ public class ArchiverBase
             addError(new InvalidEntry(md5Sum, queryRelPath, resultRelPath, reason));
         }
         
-        public void addError(final String reason)
+        public synchronized void addError(final String reason)
         {
             addError(new InvalidEntry(reason));
         }
         
-        public void addError(final Exception cause)
+        public synchronized void addError(final Exception cause)
         {
             addError(new InvalidEntry(cause));
         }
         
-        public void addResult(final String md5Sum, 
+        public synchronized void addResult(final String md5Sum, 
                               final String resultRelPath)
         {
             addResult(new Result(md5Sum, resultRelPath));
         }
         
-        public JobResults add(JobResults moreResults)
+        public synchronized JobResults add(JobResults moreResults)
         {
             errors.addAll(moreResults.getErrors());
             results.addAll(moreResults.getResults());
@@ -129,27 +129,27 @@ public class ArchiverBase
             return this;
         }
         
-        public List<Result> getResults()
+        public synchronized List<Result> getResults()
         {
             return results;
         }
 
-        public boolean noErrors()
+        public synchronized boolean noErrors()
         {
             return ArchiverBase.noErrors(errors);
         }
 
-        public List<InvalidEntry> getErrors()
+        public synchronized List<InvalidEntry> getErrors()
         {
             return errors;
         }
 
-        public int numFilesCopied()
+        public synchronized int numFilesCopied()
         {
             return numberOfFilesCopied;
         }
 
-        public void anotherFileCopied()
+        public synchronized void anotherFileCopied()
         {
             numberOfFilesCopied++;
         }
@@ -170,7 +170,26 @@ public class ArchiverBase
         return new File(archiveRootDir, "logs");
     }
     
+    public static String calcMD5For(File file, final Object lock)
+    {
+        final String md5;
+        synchronized(lock)
+        {
+            System.out.println(lock+" - Start calcMD5For("+file+")");
+            md5 = md5asHexFor(file);
+            System.out.println(lock+" - Done calcMD5For("+file+")");
+        }
+        
+        return md5;
+    }
+    
     public static String calcMD5For(File file)
+    {
+        System.out.println("Un-synchronized calcMD5For("+file+")");
+        return md5asHexFor(file);
+    }
+    
+    private static String md5asHexFor(final File file)
     {
         try
         {
@@ -202,20 +221,44 @@ public class ArchiverBase
         private final File archinveRootDir;
         private final File dstDir;
         private final JobResults results;
+        private final JpaExecutor executor;
         
-        DbAndCopyVisitor1(ImageArchiveDB db, File archiveRootDir, String destinationDir, JobResults results)
+        DbAndCopyVisitor1(final ImageArchiveDB db, 
+                          final File archiveRootDir, 
+                          final String destinationDir, 
+                          final JobResults results,
+                          final JpaExecutor executor)
         {
             this.db = db;
             this.archinveRootDir = archiveRootDir;
             this.dstDir = new File(destinationDir);
             this.results = results;
+            this.executor = executor;
+        }
+        
+        public void processFile(final File rootPath, final String relPath)
+        {
+            Runnable procFile = new Runnable(){
+                @Override
+                public void run()
+                {
+                    processFileWorker(rootPath, relPath);
+                }
+            };
+            
+            System.out.println("Submitting "+rootPath+", "+relPath);
+            executor.submit(procFile, results);
         }
 
-        public void processFile(File rootPath, String relPath)
+        private void processFileWorker(final File rootPath, final String relPath)
         {
             System.out.print(".");
+            
             File srcFile = new File(rootPath, relPath);
-            String md5sum = calcMD5For(srcFile);
+            System.out.println("Processing file: "+srcFile);
+            
+            final String md5sum = calcMD5For(srcFile, Locks.SRC_DEVICE_ACCESS);
+            
             String dstRelPath = new File(dstDir, new File(relPath).getName()).getPath();
             try
             {
@@ -326,6 +369,7 @@ public class ArchiverBase
         File dstFileFullPath = new File(archiveFilesDir, dstFileRelPathName);
         File dstDir = dstFileFullPath.getParentFile();
         
+        // Sync on DST_DEVICE_ACCESS?
         dstDir.mkdirs();
 
         String existingEntry = db.alreadyExists(md5sum);
@@ -345,10 +389,23 @@ public class ArchiverBase
                 dstFileRelPathName = new File(dstFileRelParent, dstFileName).getPath();
                 dstFileFullPath    = new File(dstDir,           dstFileName);
             }
-            copy(srcFileFullPath, dstFileFullPath);
+            
+            synchronized (Locks.SRC_DEVICE_ACCESS)
+            {
+                System.out.println("SRC_DEVICE_ACCESS - Start copy("+srcFileFullPath+", "+dstFileFullPath+")");
+                synchronized (Locks.DST_DEVICE_ACCESS)
+                {
+                    System.out.println("DST_DEVICE_ACCESS - Start copy("+srcFileFullPath+", "+dstFileFullPath+")");
+                    copy(srcFileFullPath, dstFileFullPath);
+                    System.out.println("DST_DEVICE_ACCESS - Done copy("+srcFileFullPath+", "+dstFileFullPath+")");
+                }
+                System.out.println("SRC_DEVICE_ACCESS - Done copy("+srcFileFullPath+", "+dstFileFullPath+")");
+            }
+            
             results.anotherFileCopied();
 
-            String toMD5Sum = calcMD5For(dstFileFullPath);
+            final String toMD5Sum = calcMD5For(dstFileFullPath, Locks.DST_DEVICE_ACCESS);
+            
             if(md5sum.equals(toMD5Sum))
             {
                 db.insert(md5sum, dstFileRelPathName);

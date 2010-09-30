@@ -420,14 +420,18 @@ public class Main extends ArchiverBase
             {
                 makeNewJobEntryInDB(db);
                 
+                JpaExecutor executor = new JpaExecutor();
+                
                 FileFind.FindVisitor dbVisitor = 
-                    new DbAndCopyVisitor1(db, destinationDir, newDirName, results);
+                    new DbAndCopyVisitor1(db, destinationDir, newDirName, results, executor);
 
                 FileFind finder = new FileFind(dbVisitor, new ImageFilter());
 
                 System.out.println("Archive "+startingPoint+" to "+destinationDir+":");
                 System.out.println("---------------");
                 finder.find(startingPoint);
+                System.out.println("\nDone submitting jobs - shutting down queue.");
+                executor.shutdown(results);
                 System.out.println("\nDone.\n");
             }   
         });

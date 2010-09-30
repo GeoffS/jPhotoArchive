@@ -75,7 +75,7 @@ public class MainTest extends TestCase
     
     public void testFilenameChangedAndThenFixed() throws SQLException, ClassNotFoundException
     {
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         // (Re)Check one of the files:
         File filesDir = assertHasCorrectNumberOfEnties(TIER1_ROOT, "files", "dir1", 1);
@@ -171,7 +171,7 @@ public class MainTest extends TestCase
     
     public void testFileForMd5Sum() throws SQLException, ClassNotFoundException
     {
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         // Check a match:
         JobResults jobResultsMatch = 
@@ -189,7 +189,7 @@ public class MainTest extends TestCase
     
     public void testFindForFilename() throws SQLException, ClassNotFoundException
     {
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         JobResults jobResults = assertJobNoErrors(Main.findForFilename(TIER1_ROOT, "0720"));
         
@@ -218,7 +218,7 @@ public class MainTest extends TestCase
 
     public void testMove() throws SQLException, ClassNotFoundException
     {
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         assertTestPhotos1AreInTree(TIER1_ROOT, "dir1", "subdir1");
         
@@ -268,7 +268,7 @@ public class MainTest extends TestCase
     public void testBackupWithValidation() throws SQLException, ClassNotFoundException
     {
         // Load files into the tier1 archive
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         // Backup files from tier1 -> tier2 and verify the archives are the same:
         assertJobNoErrors(Main.backupWithFullValidation(TIER1_ROOT, TIER2_ROOT));
@@ -280,18 +280,24 @@ public class MainTest extends TestCase
 
     public void testCardArchiveAndBackup()
     {
-        assertJobSuccess(Main.archiveCard(TEST_PHOTOS1, "New-Dir-Name", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS1);
-        assertTestPhotos1AreInDir(TIER1_ROOT, "New-Dir-Name");
-        
-        // Validate the DB and files:
-        assertJobSuccess(Main.validateFiles(TIER1_ROOT), NO_FILES_COPIED);
-        assertJobSuccess(Main.validateDB(TIER1_ROOT), NO_FILES_COPIED);
+        testSimpleCardArchive();
         
         // Backup Files:
         assertJobSuccess(Main.backup(TIER1_ROOT, TIER2_ROOT), NUM_FILES_IN_TEST_PHOTOS1);
         assertTestPhotos1AreInDir(TIER2_ROOT, "New-Dir-Name");
         
         assertValidateDbAndFiles(TIER2_ROOT);
+    }
+
+    // TODO parameterize like 'testArchiveTree()'
+    public void testSimpleCardArchive()
+    {
+        assertJobSuccess(Main.archiveCard(TEST_PHOTOS1, "New-Dir-Name", TIER1_ROOT), NUM_FILES_IN_TEST_PHOTOS1);
+        assertTestPhotos1AreInDir(TIER1_ROOT, "New-Dir-Name");
+        
+        // Validate the DB and files:
+        assertJobSuccess(Main.validateFiles(TIER1_ROOT), NO_FILES_COPIED);
+        assertJobSuccess(Main.validateDB(TIER1_ROOT), NO_FILES_COPIED);
     }
 
     private void assertValidateDbAndFiles(File archiveRoot)
@@ -301,7 +307,7 @@ public class MainTest extends TestCase
         assertJobNoErrors(Main.validateDB(archiveRoot));
     }
 
-    public void testSimpleArchive() throws SQLException, ClassNotFoundException
+    public void testSimpleTreeArchive() throws SQLException, ClassNotFoundException
     {
         testArchiveTree(TEST_PHOTOS1, SUB_DIR1, NUM_FILES_IN_TEST_PHOTOS1);
     }
@@ -334,7 +340,7 @@ public class MainTest extends TestCase
     public void testSimpleBackup() throws SQLException, ClassNotFoundException
     {
         // Load files into the tier1 archive
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         // Backup files from tier1 -> tier2 and verify the archives are the same:
         backupTier1ToTier2AndVerifyTheyAreTheSame();
@@ -352,7 +358,7 @@ public class MainTest extends TestCase
     public void testBackupErrorHandling() throws SQLException, ClassNotFoundException, FileNotFoundException, IOException
     {
         // Load files into the tier1 archive
-        testSimpleArchive();
+        testSimpleTreeArchive();
         
         // Insert one test file into TIER2's files folder (but not DB):
         /*File srcFile =*/ copyOnePhotoFromTierToTier(TIER1_ROOT, TIER2_ROOT);

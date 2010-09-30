@@ -26,7 +26,7 @@ public class ImageArchiveDB
     public static final String JOB_NUMBER_COLUMN = "run_number";
     public static final String JOB_TIME = "run_time";
     
-    public void dump(JobResults results) throws SQLException
+    public synchronized void dump(JobResults results) throws SQLException
     {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * from "+PHOTOS_TABLE+";");
@@ -45,7 +45,7 @@ public class ImageArchiveDB
         stmt.close();
     }
     
-    public Map<String, String> getEntries() throws SQLException
+    public synchronized Map<String, String> getEntries() throws SQLException
     {
         final Map<String, String> entries = new HashMap<String, String>();
         
@@ -82,7 +82,7 @@ public class ImageArchiveDB
         void process(ResultSet rs) throws SQLException;
     }
 
-    public String alreadyExists(String md5sum) throws SQLException
+    public synchronized String alreadyExists(String md5sum) throws SQLException
     {
         checkExistanceStmt.clearParameters();
         checkExistanceStmt.setString(1, md5sum);
@@ -100,7 +100,7 @@ public class ImageArchiveDB
         return existingFile;
     }
 
-    public void insert(String md5hex, String filename) throws SQLException
+    public synchronized void insert(String md5hex, String filename) throws SQLException
     {
         insertStmt.clearParameters();
         insertStmt.setString(1, md5hex);
@@ -110,7 +110,7 @@ public class ImageArchiveDB
         insertStmt.executeUpdate();
     }
     
-    public int newJob() throws SQLException
+    public synchronized int newJob() throws SQLException
     {
         newJobStmt.clearParameters();
         newJobStmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
@@ -123,7 +123,7 @@ public class ImageArchiveDB
         return rs.getInt(1);
     }
 
-    public static void createDB(File newDbDir, JPAlog log) throws SQLException, ClassNotFoundException
+    public synchronized static void createDB(File newDbDir, JPAlog log) throws SQLException, ClassNotFoundException
     {
         log.msg("Create new archive DB in "+newDbDir);
         // Make the dir for the database file:
@@ -213,7 +213,7 @@ public class ImageArchiveDB
         }
     }
     
-    public void validate(String md5sum, String fullDiskPath, List<InvalidEntry> collector) throws SQLException
+    public synchronized void validate(String md5sum, String fullDiskPath, List<InvalidEntry> collector) throws SQLException
     {
         String relDiskPath = stripArchiveDir(fullDiskPath);
         String dbPath = alreadyExists(md5sum);
@@ -334,12 +334,12 @@ public class ImageArchiveDB
         return DriverManager.getConnection(dbUrl, "sa", "");
     }
     
-    public void shutdown() throws SQLException 
+    public synchronized void shutdown() throws SQLException 
     {
         shutdown(this.conn, log);
     }
         
-    public static void shutdown(Connection conn, JPAlog log) throws SQLException 
+    private static void shutdown(Connection conn, JPAlog log) throws SQLException 
     {
         log.msg("Stopping the DB...");
         System.out.print("Stopping the DB...");
@@ -362,12 +362,12 @@ public class ImageArchiveDB
         System.out.println();
     }
 
-    public Map<String, String> getUnbackedupEntries() throws SQLException
+    public synchronized Map<String, String> getUnbackedupEntries() throws SQLException
     {
         return getEntriesWithBackupStatus(false);
     }
 
-    public void setAsBackedUp(String md5Sum) throws SQLException
+    public synchronized void setAsBackedUp(String md5Sum) throws SQLException
     {
         setBackupStatus(md5Sum, true);
 //        updateBackedUpStmt.clearParameters();
@@ -377,12 +377,12 @@ public class ImageArchiveDB
 //        updateBackedUpStmt.executeUpdate();
     }
     
-    public void setAsNotBackedUp(String md5Sum) throws SQLException
+    public synchronized void setAsNotBackedUp(String md5Sum) throws SQLException
     {
         setBackupStatus(md5Sum, false);
     }
     
-    public void setBackupStatus(String md5Sum, boolean status) throws SQLException
+    public synchronized void setBackupStatus(String md5Sum, boolean status) throws SQLException
     {
         updateBackedUpStmt.clearParameters();
         updateBackedUpStmt.setString(2, md5Sum);
@@ -391,12 +391,12 @@ public class ImageArchiveDB
         updateBackedUpStmt.executeUpdate();
     }
 
-    public Map<String, String> getBackedupEntries() throws SQLException
+    public synchronized Map<String, String> getBackedupEntries() throws SQLException
     {
         return getEntriesWithBackupStatus(true);
     }
 
-    public Map<String, String> getEntriesWithBackupStatus(boolean backupStatus) throws SQLException
+    public synchronized Map<String, String> getEntriesWithBackupStatus(boolean backupStatus) throws SQLException
     {
         backedupStmt.clearParameters();
         backedupStmt.setBoolean(1, backupStatus);
@@ -423,7 +423,7 @@ public class ImageArchiveDB
         return name;
     }
 
-    public void delete(String dbMd5sum) throws SQLException
+    public synchronized void delete(String dbMd5sum) throws SQLException
     {
         deleteStmt.clearParameters();
         deleteStmt.setString(1, dbMd5sum);
@@ -437,7 +437,7 @@ public class ImageArchiveDB
         }
     }
 
-    public void update(String md5sum, String newPath) throws SQLException
+    public synchronized void update(String md5sum, String newPath) throws SQLException
     {
         updatePathStmt.clearParameters();
         updatePathStmt.setString(1, newPath);
@@ -452,7 +452,7 @@ public class ImageArchiveDB
         }
     }
 
-    public Map<String, String> findForFilenameContaining(final String filenameFragment) throws SQLException
+    public synchronized Map<String, String> findForFilenameContaining(final String filenameFragment) throws SQLException
     {
         final Map<String, String> entries = new HashMap<String, String>();
         
