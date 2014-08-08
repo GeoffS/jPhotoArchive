@@ -20,20 +20,6 @@ import com.twmacinta.util.MD5;
 
 public class ArchiverBase
 {    
-    private static class JpaInputBuffer
-    {
-        public byte[] buf;
-        public String md5AsHex;
-        public File file;
-    }
-    public static final JpaInputBuffer EMPTY_BUFFER;
-    static{
-        EMPTY_BUFFER = new JpaInputBuffer();
-        EMPTY_BUFFER.buf=null; // new byte[0]; ?
-        EMPTY_BUFFER.md5AsHex = "------ No MD5 Calculated -------";
-        EMPTY_BUFFER.file = null;
-    }
-
     protected static interface DbJob
     {
         void runJob(ImageArchiveDB db, JobResults results) throws SQLException, ClassNotFoundException;
@@ -100,17 +86,17 @@ public class ArchiverBase
             numberOfFilesCopied = 0;
         }
         
-        public synchronized void addError(InvalidEntry error)
+        public void addError(InvalidEntry error)
         {
             this.errors.add(error);
         }
         
-        public synchronized void addResult(Result result)
+        public void addResult(Result result)
         {
             this.results.add(result);
         }
         
-        public synchronized void addError(final String md5Sum, 
+        public void addError(final String md5Sum, 
                              final String queryRelPath, 
                              final String resultRelPath, 
                              final String reason)
@@ -118,23 +104,23 @@ public class ArchiverBase
             addError(new InvalidEntry(md5Sum, queryRelPath, resultRelPath, reason));
         }
         
-        public synchronized void addError(final String reason)
+        public void addError(final String reason)
         {
             addError(new InvalidEntry(reason));
         }
         
-        public synchronized void addError(final Exception cause)
+        public void addError(final Exception cause)
         {
             addError(new InvalidEntry(cause));
         }
         
-        public synchronized void addResult(final String md5Sum, 
+        public void addResult(final String md5Sum, 
                               final String resultRelPath)
         {
             addResult(new Result(md5Sum, resultRelPath));
         }
         
-        public synchronized JobResults add(JobResults moreResults)
+        public JobResults add(JobResults moreResults)
         {
             errors.addAll(moreResults.getErrors());
             results.addAll(moreResults.getResults());
@@ -143,27 +129,27 @@ public class ArchiverBase
             return this;
         }
         
-        public synchronized List<Result> getResults()
+        public List<Result> getResults()
         {
             return results;
         }
 
-        public synchronized boolean noErrors()
+        public boolean noErrors()
         {
             return ArchiverBase.noErrors(errors);
         }
 
-        public synchronized List<InvalidEntry> getErrors()
+        public List<InvalidEntry> getErrors()
         {
             return errors;
         }
 
-        public synchronized int numFilesCopied()
+        public int numFilesCopied()
         {
             return numberOfFilesCopied;
         }
 
-        public synchronized void anotherFileCopied()
+        public void anotherFileCopied()
         {
             numberOfFilesCopied++;
         }
@@ -184,26 +170,7 @@ public class ArchiverBase
         return new File(archiveRootDir, "logs");
     }
     
-    public static String calcMD5For(File file, final Object lock)
-    {
-        final String md5;
-        synchronized(lock)
-        {
-            System.out.println(lock+" - Start calcMD5For("+file+")");
-            md5 = md5asHexFor(file);
-            System.out.println(lock+" - Done calcMD5For("+file+")");
-        }
-        
-        return md5;
-    }
-    
     public static String calcMD5For(File file)
-    {
-        System.out.println("Un-synchronized calcMD5For("+file+")");
-        return md5asHexFor(file);
-    }
-    
-    private static String md5asHexFor(final File file)
     {
         try
         {
@@ -214,51 +181,6 @@ public class ArchiverBase
             showError("No MD5 sum calculated for "+file, e);
             return "------ No MD5 Calculated -------";
         }
-    }
-    
-    private static JpaInputBuffer readFileAndMD5(final File file, final Object lock)
-    {
-        
-            JpaInputBuffer in = new JpaInputBuffer();
-            in.file = file;
-            long length = file.length();
-            if(length > (Integer.MAX_VALUE-10))
-            {
-                showError("File ("+file+") is too large.");
-            }
-            int len = (int)length;
-            in.buf = new byte[len+10];
-            
-            int bytesRead;
-            try
-            {
-                synchronized (lock)
-                {
-                    System.out.println(lock+" - Start readFileAndMD5("+file+")");
-                    FileInputStream fis = new FileInputStream(file);
-                    bytesRead = fis.read(in.buf);
-                    fis.close();
-                    System.out.println(lock+" - Done readFileAndMD5("+file+")");
-                }
-            }
-            catch (IOException e)
-            {
-                showError("Error reading file "+file, e);
-                return EMPTY_BUFFER;
-            }
-
-            if(bytesRead != len)
-            {
-                showError("Error reading file, bytes read ("+bytesRead+") not equal to file length ("+len+")");
-                return EMPTY_BUFFER;
-            }
-
-            MD5 md5 = new MD5();
-            md5.Update(in.buf);
-            in.md5AsHex = MD5.asHex(md5.Final());
-
-            return in;
-        
     }
     
     protected static void showError(String msg, String path, Exception e)
@@ -274,62 +196,30 @@ public class ArchiverBase
         System.out.println("-------------------------\n");
     }
     
-    private static void showError(String msg)
-    {
-        log.error(msg);
-        System.out.println(msg);
-        System.out.println("-------------------------\n");
-    }
-    
     protected static class DbAndCopyVisitor1 extends FileFind.FileOnlyVisitor
     {
         private final ImageArchiveDB db;
         private final File archinveRootDir;
         private final File dstDir;
         private final JobResults results;
-        private final JpaExecutor executor;
         
-        DbAndCopyVisitor1(final ImageArchiveDB db, 
-                          final File archiveRootDir, 
-                          final String destinationDir, 
-                          final JobResults results,
-                          final JpaExecutor executor)
+        DbAndCopyVisitor1(ImageArchiveDB db, File archiveRootDir, String destinationDir, JobResults results)
         {
             this.db = db;
             this.archinveRootDir = archiveRootDir;
             this.dstDir = new File(destinationDir);
             this.results = results;
-            this.executor = executor;
-        }
-        
-        public void processFile(final File rootPath, final String relPath)
-        {
-            Runnable procFile = new Runnable(){
-                @Override
-                public void run()
-                {
-                    processFileWorker(rootPath, relPath);
-                }
-            };
-            
-            System.out.println("Submitting "+rootPath+", "+relPath);
-            executor.submit(procFile, results);
         }
 
-        private void processFileWorker(final File rootPath, final String relPath)
+        public void processFile(File rootPath, String relPath)
         {
             System.out.print(".");
-            
             File srcFile = new File(rootPath, relPath);
-            System.out.println("Processing file: "+srcFile);
-            
-            final JpaInputBuffer srcData = readFileAndMD5(srcFile, Locks.SRC_DEVICE_ACCESS);
-            if(srcData == EMPTY_BUFFER) return; // We've logged the error already.
-            
+            String md5sum = calcMD5For(srcFile);
             String dstRelPath = new File(dstDir, new File(relPath).getName()).getPath();
             try
             {
-                saveToFileAndAddToDb(VERSION_IF_NEEDED, dstRelPath, srcData, archinveRootDir, db, results);
+                copyFileAndAddToDb(srcFile, VERSION_IF_NEEDED, dstRelPath, md5sum, archinveRootDir, db, results);
             }
             catch (Exception e)
             {
@@ -370,47 +260,18 @@ public class ArchiverBase
         }
     }
     
-    public static void save(final JpaInputBuffer src, final File toFile)
-        throws FileNotFoundException, IOException
-    {
-        log.msg("Save: "+src.file+"->"+toFile);
-        
-        FileOutputStream to = new FileOutputStream(toFile);
-        try
-        {
-            to.write(src.buf);
-        }
-        finally
-        {
-            close(to);
-        }
-    }
-
-    private static void close(FileOutputStream to)
-    {
-        if(to != null)
-        {
-            try
-            {
-                to.close();
-            }
-            catch (IOException e)
-            {
-                System.out.println("to.close() - Shouldn't happen!");
-                e.printStackTrace();
-            }
-        }
-    }
-    
     public static void copy(final File fromFile, final File toFile) 
         throws FileNotFoundException, IOException
     {
         log.msg("Copy: "+fromFile+"->"+toFile);
         
-        InputStream inputStream = new FileInputStream(fromFile);
-        FileOutputStream to = new FileOutputStream(toFile);
+        InputStream inputStream = null;
+        FileOutputStream to = null;
         try
         {
+            inputStream = new FileInputStream(fromFile);
+            to = new FileOutputStream(toFile);
+            
             byte[] buffer = new byte[4096];
             int bytesRead;
 
@@ -435,7 +296,18 @@ public class ArchiverBase
                     e.printStackTrace();
                 }
             }
-            close(to);
+            if(to != null)
+            {
+                try
+                {
+                    to.close();
+                }
+                catch (IOException e)
+                {
+                    System.out.println("to.close() - Shouldn't happen!");
+                    e.printStackTrace();
+                }
+            }
         }
     }
     
@@ -457,7 +329,6 @@ public class ArchiverBase
         File dstFileFullPath = new File(archiveFilesDir, dstFileRelPathName);
         File dstDir = dstFileFullPath.getParentFile();
         
-        // Sync on DST_DEVICE_ACCESS?
         dstDir.mkdirs();
 
         String existingEntry = db.alreadyExists(md5sum);
@@ -477,23 +348,10 @@ public class ArchiverBase
                 dstFileRelPathName = new File(dstFileRelParent, dstFileName).getPath();
                 dstFileFullPath    = new File(dstDir,           dstFileName);
             }
-            
-            synchronized (Locks.SRC_DEVICE_ACCESS)
-            {
-                System.out.println("SRC_DEVICE_ACCESS - Start copy("+srcFileFullPath+", "+dstFileFullPath+")");
-                synchronized (Locks.DST_DEVICE_ACCESS)
-                {
-                    System.out.println("DST_DEVICE_ACCESS - Start copy("+srcFileFullPath+", "+dstFileFullPath+")");
-                    copy(srcFileFullPath, dstFileFullPath);
-                    System.out.println("DST_DEVICE_ACCESS - Done copy("+srcFileFullPath+", "+dstFileFullPath+")");
-                }
-                System.out.println("SRC_DEVICE_ACCESS - Done copy("+srcFileFullPath+", "+dstFileFullPath+")");
-            }
-            
+            copy(srcFileFullPath, dstFileFullPath);
             results.anotherFileCopied();
 
-            final String toMD5Sum = calcMD5For(dstFileFullPath, Locks.DST_DEVICE_ACCESS);
-            
+            String toMD5Sum = calcMD5For(dstFileFullPath);
             if(md5sum.equals(toMD5Sum))
             {
                 db.insert(md5sum, dstFileRelPathName);
@@ -506,69 +364,6 @@ public class ArchiverBase
             }
         }
     }
-    
-    protected static void saveToFileAndAddToDb(
-            boolean insertVersionNumberIfneeded,
-            String dstFileRelPathName,
-            JpaInputBuffer srcData,
-            File archiveRootDir, 
-            ImageArchiveDB db, 
-            JobResults results) 
-    throws SQLException, FileNotFoundException, IOException
-    {
-        File archiveFilesDir = makeFilesDirFrom(archiveRootDir);
-
-        File dstFileRelPath = new File(dstFileRelPathName);
-        String dstFileName = dstFileRelPath.getName();
-        File dstFileRelParent = dstFileRelPath.getParentFile();
-
-        File dstFileFullPath = new File(archiveFilesDir, dstFileRelPathName);
-        File dstDir = dstFileFullPath.getParentFile();
-
-        // Sync on DST_DEVICE_ACCESS?
-        dstDir.mkdirs();
-
-        String existingEntry = db.alreadyExists(srcData.md5AsHex);
-        if(existingEntry!=null)
-        {
-            String msg = srcData.md5AsHex+": "+srcData.file+" already exists as "+existingEntry;
-            log.warning(msg);
-            System.out.println("\n"+msg);
-        }
-        else
-        {
-            if(insertVersionNumberIfneeded)
-            {
-                dstFileName = insertCopyNumberIfNecessary(dstDir, dstFileName);
-
-                // Recreate the necessary pieces for the DB and copy operations:
-                dstFileRelPathName = new File(dstFileRelParent, dstFileName).getPath();
-                dstFileFullPath    = new File(dstDir,           dstFileName);
-            }
-
-            synchronized (Locks.DST_DEVICE_ACCESS)
-            {
-                System.out.println("DST_DEVICE_ACCESS - Start save("+srcData.file+", "+dstFileFullPath+")");
-                save(srcData, dstFileFullPath);
-                System.out.println("DST_DEVICE_ACCESS - Done save("+srcData.file+", "+dstFileFullPath+")");
-            }
-
-            results.anotherFileCopied();
-
-            final String toMD5Sum = calcMD5For(dstFileFullPath, Locks.DST_DEVICE_ACCESS);
-
-            if(srcData.md5AsHex.equals(toMD5Sum))
-            {
-                db.insert(srcData.md5AsHex, dstFileRelPathName);
-            }
-            else
-            {
-                String msg = "MD5s don't match: "+srcData.file+":"+srcData.md5AsHex+" != "+dstFileFullPath+":"+toMD5Sum;
-                log.error(msg);
-                System.out.println("Error: "+msg);
-            }
-        }
-}
 
     private static String insertCopyNumberIfNecessary(File dstDir, String dstFilename)
     {
